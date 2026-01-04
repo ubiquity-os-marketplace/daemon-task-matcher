@@ -9,6 +9,7 @@
         "@ubiquity-os/plugin-sdk": "^3.8.4",
         "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
         "hono": "^4.11.3",
+        "openai": "^4.70.2",
       },
       "devDependencies": {
         "@commitlint/cli": "20.3.0",
