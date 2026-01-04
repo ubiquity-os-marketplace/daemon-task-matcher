@@ -1,5 +1,5 @@
-import OpenAI from "openai";
 import { callLlm, sanitizeLlmResponse } from "@ubiquity-os/plugin-sdk";
+import OpenAI from "openai";
 import { Context } from "../types/index";
 import { IssueSummary, MatchSuggestion, PullRequestDiff, PullRequestSummary } from "./types";
 

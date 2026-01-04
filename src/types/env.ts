@@ -1,5 +1,4 @@
 import { StaticDecode, Type as T } from "@sinclair/typebox";
-import "dotenv/config";
 import { LOG_LEVEL } from "@ubiquity-os/ubiquity-os-logger";
 
 /**
