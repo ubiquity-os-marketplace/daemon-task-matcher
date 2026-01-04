@@ -1,7 +1,7 @@
 {
   "name": "daemon-task-matcher",
   "description": "Suggests priced issues that likely match a newly opened PR.",
-  "short_name": "Meniole/daemon-task-matcher@development",
+  "short_name": "daemon-task-matcher",
   "ubiquity:listeners": ["pull_request.opened", "pull_request.reopened", "issue_comment.edited"],
   "configuration": {
     "default": {},
@@ -9,14 +9,10 @@
     "properties": {
       "confidenceThreshold": {
         "default": 0.5,
-        "minimum": 0,
-        "maximum": 1,
         "type": "number"
       },
       "maxSuggestions": {
         "default": 5,
-        "minimum": 1,
-        "maximum": 20,
         "type": "integer"
       },
       "requirePriceLabel": {
@@ -29,8 +25,6 @@
       },
       "maxIssuesPerLlmCall": {
         "default": 40,
-        "minimum": 5,
-        "maximum": 200,
         "type": "integer"
       }
     }
