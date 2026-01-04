@@ -9,7 +9,7 @@ export class PullRequestCommenter {
   async upsertSuggestions(pr: PullRequestSummary, suggestions: MatchSuggestion[]): Promise<void> {
     const { octokit } = this._context;
 
-    const body = this._renderBody(pr, suggestions);
+    const body = this._renderBody(suggestions);
 
     const comments = await octokit.paginate(octokit.rest.issues.listComments, {
       owner: pr.owner,
@@ -37,7 +37,7 @@ export class PullRequestCommenter {
     });
   }
 
-  private _renderBody(pr: PullRequestSummary, suggestions: MatchSuggestion[]): string {
+  private _renderBody(suggestions: MatchSuggestion[]): string {
     const lines: string[] = [MARKER, "### Related issues suggestions", "", "Select one (or more) issue(s) to link:", ""];
 
     for (const s of suggestions) {
