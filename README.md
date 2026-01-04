@@ -31,6 +31,10 @@ plugins:
       maxSuggestions: 5
       requirePriceLabel: true
       maxIssuesPerLlmCall: 40
+      # optional: use OpenRouter via OpenAI SDK instead of callLlm
+      openRouter:
+        endpoint: "https://openrouter.ai/api/v1"
+        model: "openai/gpt-4o-mini"
 ```
 
 ###### At this stage, your plugin will fire on your defined events with the required settings passed in from the kernel. You can now start writing your plugin's logic.

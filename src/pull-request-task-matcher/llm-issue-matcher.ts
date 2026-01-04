@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import { callLlm, sanitizeLlmResponse } from "@ubiquity-os/plugin-sdk";
 import { Context } from "../types/index";
 import { IssueSummary, MatchSuggestion, PullRequestDiff, PullRequestSummary } from "./types";
@@ -69,18 +70,7 @@ export class LlmIssueMatcher {
       "Prefer issues whose title/body aligns with code changes and file paths. " +
       "Output format: { suggestions: [{ owner, repo, number, confidence, reason }] }.";
 
-    const completion = await callLlm(
-      {
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: `${user}\n\n${JSON.stringify(payload)}` },
-        ],
-      },
-      this._context
-    );
-
-    const text = (completion as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content;
+    const text = await this._getCompletionText(system, `${user}\n\n${JSON.stringify(payload)}`);
     if (!text) return [];
 
     const parsed = JSON.parse(sanitizeLlmResponse(text)) as LlmResult;
@@ -95,6 +85,41 @@ export class LlmIssueMatcher {
         reason: s.reason,
       }))
       .filter((s) => Number.isFinite(s.confidence) && s.owner && s.repo && Number.isFinite(s.number));
+  }
+
+  private async _getCompletionText(system: string, user: string): Promise<string | null> {
+    const openRouter = this._context.config.openRouter;
+    if (openRouter) {
+      const apiKey = this._context.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
+      if (!apiKey) {
+        throw new Error("Missing OPENROUTER_API_KEY env var while openRouter config is set");
+      }
+
+      const client = new OpenAI({ apiKey, baseURL: openRouter.endpoint });
+      const completion = await client.chat.completions.create({
+        model: openRouter.model,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      });
+
+      return completion.choices?.[0]?.message?.content ?? null;
+    }
+
+    const completion = await callLlm(
+      {
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      },
+      this._context
+    );
+
+    return (completion as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content ?? null;
   }
 
   private _truncate(input: string, maxLen: number): string {

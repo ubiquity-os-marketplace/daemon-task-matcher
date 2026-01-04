@@ -13,6 +13,12 @@ export const pluginSettingsSchema = T.Object(
     maxSuggestions: T.Integer({ default: 5, minimum: 1, maximum: 20 }),
     requirePriceLabel: T.Boolean({ default: true }),
     maxIssuesPerLlmCall: T.Integer({ default: 40, minimum: 5, maximum: 200 }),
+    openRouter: T.Optional(
+      T.Object({
+        endpoint: T.String({ minLength: 1 }),
+        model: T.String({ minLength: 1 }),
+      })
+    ),
   },
   { default: {} }
 );
