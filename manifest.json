@@ -28,6 +28,5 @@
         "type": "integer"
       }
     }
-  },
-  "homepage_url": "https://daemon-task-matcher-develo.deno.dev"
+  }
 }
