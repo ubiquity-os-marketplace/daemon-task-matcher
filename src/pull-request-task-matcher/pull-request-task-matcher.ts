@@ -1,5 +1,4 @@
 import { Context } from "../types/index";
-import { InstallationRepoLister } from "./installation-repo-lister";
 import { LlmIssueMatcher } from "./llm-issue-matcher";
 import { PullRequestCommenter } from "./pull-request-commenter";
 import { PullRequestDiffFetcher } from "./pull-request-diff-fetcher";
@@ -37,14 +36,12 @@ export class PullRequestTaskMatcher {
       return;
     }
 
-    const repoLister = new InstallationRepoLister(this._context);
-    const repos = await repoLister.listRepos();
-    const reposToScan = repos.length > 0 ? repos : [{ owner: pr.owner, repo: pr.repo }];
-
     const issueFinder = new UnassignedPricedIssueFinder(this._context, {
       requirePriceLabel: config.requirePriceLabel,
     });
-    const issues = await issueFinder.listOpenUnassignedIssues(reposToScan);
+
+    const issuesFromMap = await issueFinder.listOpenUnassignedIssuesFromMap();
+    const issues = issuesFromMap ?? (await issueFinder.listOpenUnassignedIssues([{ owner: pr.owner, repo: pr.repo }]));
 
     if (issues.length === 0) {
       logger.info("No candidate issues found.");

@@ -23,13 +23,40 @@ export class CheckboxSelectionHandler {
       return;
     }
 
+    const checkedOpen = await this._filterOpenIssues(parsed.checked);
+    if (checkedOpen.length === 0) {
+      logger.info("All checked suggestions are closed; skipping linking.");
+      return;
+    }
+
     const owner = payload.repository.owner.login;
     const repo = payload.repository.name;
     const pullNumber = issue.number;
 
     const linker = new PullRequestBodyLinker(this._context);
-    await linker.addClosingReferences(owner, repo, pullNumber, parsed.checked);
+    await linker.addClosingReferences(owner, repo, pullNumber, checkedOpen);
 
     logger.ok("Linked selected issue(s) to PR.", { owner, repo, pullNumber });
+  }
+
+  private async _filterOpenIssues(refs: { owner: string; repo: string; number: number }[]): Promise<{ owner: string; repo: string; number: number }[]> {
+    const results = await Promise.all(
+      refs.map(async (ref) => {
+        const issue = await this._context.octokit.rest.issues.get({
+          owner: ref.owner,
+          repo: ref.repo,
+          issue_number: ref.number,
+        });
+
+        const state = (issue.data as { state?: string | null }).state;
+        const pr = (issue.data as { pull_request?: unknown }).pull_request;
+
+        if (pr) return null;
+        if ((state ?? "").toLowerCase() !== "open") return null;
+        return ref;
+      })
+    );
+
+    return results.filter((v): v is { owner: string; repo: string; number: number } => v !== null);
   }
 }

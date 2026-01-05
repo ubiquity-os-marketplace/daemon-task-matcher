@@ -22,6 +22,8 @@ type IssuesMapRecord = {
   labels?: string[] | null;
   assignees?: string[] | null;
   state?: string | null;
+  closed?: boolean | null;
+  closed_at?: string | null;
 };
 
 type IssuesMap = Record<string, IssuesMapRecord>;
@@ -33,27 +35,22 @@ export class UnassignedPricedIssueFinder {
   ) {}
 
   async listOpenUnassignedIssues(repos: RepoRef[]): Promise<IssueSummary[]> {
-    const fromMap = await this._tryFetchIssuesFromMap(repos);
-    if (fromMap) return fromMap;
+    const fromMap = await this.listOpenUnassignedIssuesFromMap();
+    if (fromMap !== null) return fromMap;
 
     return await this._listOpenUnassignedIssuesViaGitHubApi(repos);
   }
 
-  private async _tryFetchIssuesFromMap(repos: RepoRef[]): Promise<IssueSummary[] | null> {
+  async listOpenUnassignedIssuesFromMap(): Promise<IssueSummary[] | null> {
     try {
       const map = await this._fetchIssuesMap();
       if (!map) return null;
 
-      const repoAllowList = new Set(repos.map((r) => `${r.owner}/${r.repo}`));
-      if (!this._issuesMapHasAnyInstallationRepo(map, repoAllowList)) {
-        this._context.logger.info("issues-map.json has no entries for installation repos; falling back to GitHub API.");
-        return null;
-      }
-
-      const candidates = this._collectCandidatesFromIssuesMap(map, repoAllowList);
-      if (candidates.length === 0) {
-        this._context.logger.info("issues-map.json produced zero candidates; falling back to GitHub API.");
-        return null;
+      const candidates: IssueSummary[] = [];
+      for (const record of Object.values(map)) {
+        const candidate = this._toCandidateFromIssuesMapRecord(record);
+        if (!candidate) continue;
+        candidates.push(candidate);
       }
 
       return candidates;
@@ -83,34 +80,12 @@ export class UnassignedPricedIssueFinder {
     return json as IssuesMap;
   }
 
-  private _issuesMapHasAnyInstallationRepo(map: IssuesMap, repoAllowList: Set<string>): boolean {
-    for (const record of Object.values(map)) {
-      if (!record || typeof record !== "object") continue;
-      if (!record.owner || !record.repo) continue;
-      if (repoAllowList.has(`${record.owner}/${record.repo}`)) return true;
-    }
-    return false;
-  }
-
-  private _collectCandidatesFromIssuesMap(map: IssuesMap, repoAllowList: Set<string>): IssueSummary[] {
-    const candidates: IssueSummary[] = [];
-    for (const record of Object.values(map)) {
-      const candidate = this._toCandidateFromIssuesMapRecord(record, repoAllowList);
-      if (!candidate) continue;
-      candidates.push(candidate);
-    }
-    return candidates;
-  }
-
-  private _toCandidateFromIssuesMapRecord(record: IssuesMapRecord, repoAllowList: Set<string>): IssueSummary | null {
+  private _toCandidateFromIssuesMapRecord(record: IssuesMapRecord): IssueSummary | null {
     if (!record || typeof record !== "object") return null;
     if (!record.owner || !record.repo || typeof record.number !== "number") return null;
-    if (!repoAllowList.has(`${record.owner}/${record.repo}`)) return null;
-    if ((record.state ?? "").toLowerCase() !== "open") return null;
-    if ((record.assignees ?? []).length > 0) return null;
+    if (this._isClosedIssuesMapRecord(record)) return null;
 
     const labels = record.labels ?? [];
-    if (this._config.requirePriceLabel && !labels.some((l) => PRICE_LABEL_REGEX.test(l))) return null;
 
     return {
       owner: record.owner,
@@ -121,6 +96,14 @@ export class UnassignedPricedIssueFinder {
       url: record.url ?? "",
       labels,
     };
+  }
+
+  private _isClosedIssuesMapRecord(record: IssuesMapRecord): boolean {
+    if (record.closed === true) return true;
+    if (typeof record.closed_at === "string" && record.closed_at.trim().length > 0) return true;
+
+    const state = (record.state ?? "").trim().toLowerCase();
+    return state === "closed";
   }
 
   private async _listOpenUnassignedIssuesViaGitHubApi(repos: RepoRef[]): Promise<IssueSummary[]> {
