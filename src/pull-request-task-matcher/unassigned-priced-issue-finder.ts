@@ -123,15 +123,13 @@ export class UnassignedPricedIssueFinder {
   private async _listOpenUnassignedIssuesViaGitHubApi(repos: RepoRef[]): Promise<IssueSummary[]> {
     const allIssues: IssueSummary[] = [];
     for (const repo of repos) {
-      const response = await this._context.octokit.rest.issues.listForRepo({
+      const issues = await this._context.octokit.paginate(this._context.octokit.rest.issues.listForRepo, {
         owner: repo.owner,
         repo: repo.repo,
         state: "open",
         per_page: 100,
         assignee: "none",
       });
-
-      const issues = response.data;
 
       for (const issue of issues) {
         const issueSummary = this._toCandidateIssue(repo.owner, repo.repo, issue);

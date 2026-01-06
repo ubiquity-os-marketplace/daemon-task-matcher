@@ -36,7 +36,7 @@ export function parseLinguistIgnoreGlobsFromGitattributes(content?: string): str
 
 function hasLinguistGeneratedOrVendored(attrs: string): boolean {
   const normalized = attrs.toLowerCase();
-  return normalized.includes("linguist-generated") || normalized.includes("linguist-vendored") || normalized.includes("linguist_documentation");
+  return normalized.includes("linguist-generated") || normalized.includes("linguist-vendored") || normalized.includes("linguist-documentation");
 }
 
 function stripTrailingComment(line: string): string {
