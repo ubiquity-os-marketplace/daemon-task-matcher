@@ -36,7 +36,7 @@ export class PullRequestCommenter {
     const lines: string[] = [MARKER, "### Related issues suggestions", "", "Select one (or more) issue(s) to link:", ""];
 
     for (const s of suggestions) {
-      lines.push(`- [ ] ${s.owner}/${s.repo}#${s.number} (${s.confidence.toFixed(2)}%)`);
+      lines.push(`- [ ] ${s.owner}/${s.repo}#${s.number} (${(s.confidence * 100).toFixed(2)}%)`);
     }
 
     return lines.join("\n");
