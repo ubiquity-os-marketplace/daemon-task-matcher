@@ -20,11 +20,11 @@ The local server accepts the same request body shape the Ubiquity kernel sends.
 
 1. Start the plugin:
 
-  - `NODE_ENV=local bun run dev:bun`
+- `NODE_ENV=local bun run dev:bun`
 
 2. In another terminal, send a `pull_request.opened` event:
 
-  - `GITHUB_TOKEN=... bun scripts/post-event.ts`
+- `GITHUB_TOKEN=... bun scripts/post-event.ts`
 
 Notes:
 
@@ -38,7 +38,6 @@ If you want to test against a real repository, you can use https://github.com/Me
 - Create a PR in that repo that should match an existing priced issue.
 - Trigger the plugin via your Ubiquity setup (or by sending the kernel-shaped POST to your local server).
 - Useful `gh` commands for quick iteration:
-
   - `gh repo clone Meniole/daemon-task-matcher`
   - `gh pr create --fill`
   - `gh pr view --json number,title,body,headRefName`
