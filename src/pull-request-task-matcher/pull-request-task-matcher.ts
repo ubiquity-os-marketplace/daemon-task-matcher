@@ -60,7 +60,7 @@ export class PullRequestTaskMatcher {
     }
 
     if (top[0].confidence < config.confidenceThreshold) {
-      logger.info("Top match below confidence threshold; skipping comment.");
+      logger.info("Top match below confidence threshold; skipping comment.", { top: top.length ? top : "<empty>", threshold: config.confidenceThreshold });
       return;
     }
 
