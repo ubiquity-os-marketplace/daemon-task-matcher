@@ -41,7 +41,7 @@ export class PullRequestTaskMatcher {
     });
 
     const issuesFromMap = await issueFinder.listOpenUnassignedIssuesFromMap();
-    const issues = issuesFromMap ?? (await issueFinder.listOpenUnassignedIssues([{ owner: pr.owner, repo: pr.repo }]));
+    const issues = issuesFromMap?.length ? issuesFromMap : await issueFinder.listOpenUnassignedIssues([{ owner: pr.owner, repo: pr.repo }]);
 
     if (issues.length === 0) {
       logger.info("No candidate issues found.");

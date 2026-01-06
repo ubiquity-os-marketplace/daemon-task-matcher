@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { drop } from "@mswjs/data";
+import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { http, HttpResponse } from "msw";
@@ -202,6 +203,7 @@ function createPullRequestContext(): Context {
       maxIssuesPerLlmCall: 40,
     },
     octokit: new customOctokit(),
+    commentHandler: new CommentHandler(),
     authToken: "token",
     command: null,
   } as unknown as Context;

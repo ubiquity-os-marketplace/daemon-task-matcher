@@ -38,20 +38,22 @@ export class UnassignedPricedIssueFinder {
   ) {}
 
   async listOpenUnassignedIssues(repos: RepoRef[]): Promise<IssueSummary[]> {
-    const fromMap = await this.listOpenUnassignedIssuesFromMap();
-    if (fromMap !== null) return fromMap;
+    const fromMap = await this.listOpenUnassignedIssuesFromMap(repos);
+    if (fromMap !== null && fromMap.length > 0) return fromMap;
 
     return await this._listOpenUnassignedIssuesViaGitHubApi(repos);
   }
 
-  async listOpenUnassignedIssuesFromMap(): Promise<IssueSummary[] | null> {
+  async listOpenUnassignedIssuesFromMap(repos?: RepoRef[]): Promise<IssueSummary[] | null> {
     try {
       const map = await this._fetchIssuesMap();
       if (!map) return null;
 
+      const repoKeys = repos?.length ? new Set(repos.map((r) => `${r.owner}/${r.repo}`)) : null;
+
       const candidates: IssueSummary[] = [];
       for (const record of Object.values(map)) {
-        const candidate = this._toCandidateFromIssuesMapRecord(record);
+        const candidate = this._toCandidateFromIssuesMapRecord(record, repoKeys);
         if (!candidate) continue;
         candidates.push(candidate);
       }
@@ -83,12 +85,21 @@ export class UnassignedPricedIssueFinder {
     return json as IssuesMap;
   }
 
-  private _toCandidateFromIssuesMapRecord(record: IssuesMapRecord): IssueSummary | null {
+  private _toCandidateFromIssuesMapRecord(record: IssuesMapRecord, repoKeys: Set<string> | null): IssueSummary | null {
     if (!record || typeof record !== "object") return null;
     if (!record.owner || !record.repo || typeof record.number !== "number") return null;
     if (this._isClosedIssuesMapRecord(record)) return null;
 
+    if (repoKeys && !repoKeys.has(`${record.owner}/${record.repo}`)) return null;
+
+    const assignees = record.assignees ?? [];
+    if (Array.isArray(assignees) && assignees.length > 0) return null;
+
     const labels = record.labels ?? [];
+
+    if (this._config.requirePriceLabel) {
+      if (!labels.some((l) => PRICE_LABEL_REGEX.test(l))) return null;
+    }
 
     return {
       owner: record.owner,
