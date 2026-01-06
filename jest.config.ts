@@ -18,7 +18,7 @@ const cfg: Config = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  setupFilesAfterEnv: ["dotenv/config"],
+  setupFilesAfterEnv: ["dotenv/config", "<rootDir>/tests/jest-setup.ts"],
 };
 
 export default cfg;
