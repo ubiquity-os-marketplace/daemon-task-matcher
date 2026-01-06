@@ -8,7 +8,7 @@
     "type": "object",
     "properties": {
       "confidenceThreshold": {
-        "default": 0.5,
+        "default": 0.8,
         "minimum": 0,
         "maximum": 1,
         "type": "number"
@@ -24,7 +24,7 @@
         "type": "boolean"
       },
       "maxIssuesPerLlmCall": {
-        "default": 40,
+        "default": 20,
         "minimum": 5,
         "maximum": 200,
         "type": "integer"
