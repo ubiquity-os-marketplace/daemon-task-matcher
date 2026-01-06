@@ -24,7 +24,7 @@ export class PullRequestCommenter {
         owner: pr.owner,
         repo: pr.repo,
         comment_id: existing.id,
-        body,
+        body: this._context.commentHandler.createCommentBody(this._context, this._context.logger.info(body), { raw: true }),
       });
       return;
     }
