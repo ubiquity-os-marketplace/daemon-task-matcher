@@ -121,9 +121,9 @@ export class LlmIssueMatcher {
           isErrorRetryable: (error) => this._isRetryableLlmError(error),
         }
       );
-    } catch (error) {
+    } catch (err) {
       this._context.logger.info("LLM match failed after retries; skipping chunk.", {
-        error: error instanceof Error ? error : { stack: String(error) },
+        err,
       });
       return [];
     }
