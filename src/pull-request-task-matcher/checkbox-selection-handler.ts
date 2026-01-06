@@ -42,18 +42,22 @@ export class CheckboxSelectionHandler {
   private async _filterOpenIssues(refs: { owner: string; repo: string; number: number }[]): Promise<{ owner: string; repo: string; number: number }[]> {
     const results = await Promise.all(
       refs.map(async (ref) => {
-        const issue = await this._context.octokit.rest.issues.get({
-          owner: ref.owner,
-          repo: ref.repo,
-          issue_number: ref.number,
-        });
+        try {
+          const issue = await this._context.octokit.rest.issues.get({
+            owner: ref.owner,
+            repo: ref.repo,
+            issue_number: ref.number,
+          });
 
-        const state = (issue.data as { state?: string | null }).state;
-        const pr = (issue.data as { pull_request?: unknown }).pull_request;
+          const state = (issue.data as { state?: string | null }).state;
+          const pr = (issue.data as { pull_request?: unknown }).pull_request;
 
-        if (pr) return null;
-        if ((state ?? "").toLowerCase() !== "open") return null;
-        return ref;
+          if (pr) return null;
+          if ((state ?? "").toLowerCase() !== "open") return null;
+          return ref;
+        } catch {
+          return null;
+        }
       })
     );
 
