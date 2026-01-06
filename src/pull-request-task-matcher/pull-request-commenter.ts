@@ -29,12 +29,7 @@ export class PullRequestCommenter {
       return;
     }
 
-    await octokit.rest.issues.createComment({
-      owner: pr.owner,
-      repo: pr.repo,
-      issue_number: pr.number,
-      body,
-    });
+    await this._context.commentHandler.postComment(this._context, this._context.logger.info(body), { raw: true });
   }
 
   private _renderBody(suggestions: MatchSuggestion[]): string {

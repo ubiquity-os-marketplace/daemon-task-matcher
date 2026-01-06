@@ -51,7 +51,7 @@ export class LlmIssueMatcher {
         title: pr.title,
         body: pr.body,
       },
-      diff: this._truncate(diff.text, 48000),
+      diff: diff.text,
       issues: issues.map((i) => ({
         owner: i.owner,
         repo: i.repo,
@@ -120,11 +120,6 @@ export class LlmIssueMatcher {
     );
 
     return (completion as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content ?? null;
-  }
-
-  private _truncate(input: string, maxLen: number): string {
-    if (input.length <= maxLen) return input;
-    return input.slice(0, maxLen);
   }
 
   private _clamp01(value: number): number {

@@ -69,7 +69,19 @@ const pullFilesHandler = http.get("https://api.github.com/repos/:owner/:repo/pul
       filename: "src/example.ts",
       patch: `@@\n- old\n+ new\n// repo ${params.repo} pr ${params.pull_number}`,
     },
+    {
+      filename: "dist/bundle.js",
+      patch: "@@\n- old\n+ new",
+    },
   ])
+);
+
+const gitattributesHandler = http.get("https://api.github.com/repos/:owner/:repo/contents/.gitattributes", () =>
+  HttpResponse.json({
+    type: "file",
+    encoding: "base64",
+    content: Buffer.from("dist/** linguist-generated\n*.lockb linguist-generated\n*.lock linguist-generated\n").toString("base64"),
+  })
 );
 
 const listIssuesHandler = http.get("https://api.github.com/repos/:owner/:repo/issues", ({ params }) => {
@@ -131,6 +143,7 @@ describe("e2e", () => {
     await setupTests();
 
     server.use(issuesMapHandler, installationReposHandler, pullFilesHandler, listIssuesHandler, listIssueCommentsHandler, graphqlHandler, llmHandler);
+    server.use(gitattributesHandler);
   });
 
   afterEach(() => {

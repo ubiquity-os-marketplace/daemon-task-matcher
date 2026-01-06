@@ -1,3 +1,4 @@
+import { RestEndpointMethodTypes } from "@ubiquity-os/plugin-sdk/octokit";
 import { Context } from "../types/index";
 import { IssueSummary, RepoRef } from "./types";
 
@@ -27,6 +28,8 @@ type IssuesMapRecord = {
 };
 
 type IssuesMap = Record<string, IssuesMapRecord>;
+
+type IssueItem = RestEndpointMethodTypes["issues"]["listForRepo"]["response"]["data"][0];
 
 export class UnassignedPricedIssueFinder {
   constructor(
@@ -74,7 +77,7 @@ export class UnassignedPricedIssueFinder {
       },
     });
 
-    const data = (response as unknown as { data?: unknown }).data;
+    const data = response.data;
     const json = typeof data === "string" ? (JSON.parse(data) as unknown) : data;
     if (!json || typeof json !== "object") return null;
     return json as IssuesMap;
@@ -129,16 +132,8 @@ export class UnassignedPricedIssueFinder {
     return allIssues;
   }
 
-  private _toCandidateIssue(owner: string, repo: string, issue: unknown): IssueSummary | null {
-    const i = issue as {
-      pull_request?: unknown;
-      number: number;
-      title?: string | null;
-      body?: string | null;
-      html_url?: string | null;
-      labels?: Array<string | { name?: string | null }> | null;
-      assignees?: unknown[] | null;
-    };
+  private _toCandidateIssue(owner: string, repo: string, issue: IssueItem): IssueSummary | null {
+    const i = issue;
 
     if (i.pull_request) return null;
 

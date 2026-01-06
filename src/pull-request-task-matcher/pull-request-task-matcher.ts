@@ -30,7 +30,7 @@ export class PullRequestTaskMatcher {
     }
 
     const diffFetcher = new PullRequestDiffFetcher(this._context);
-    const diff = await diffFetcher.fetchDiff(pr.owner, pr.repo, pr.number);
+    const diff = await diffFetcher.fetchDiff(pr.owner, pr.repo, pr.number, this._context.payload.pull_request?.head?.sha);
     if (!diff.text.trim()) {
       logger.info("PR has no diff content; skipping.");
       return;
