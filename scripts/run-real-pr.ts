@@ -84,7 +84,7 @@ const context: PluginContext<PluginSettings, Env, null, SupportedEvents> = {
   octokit,
   config,
   env,
-  logger: new Logs((process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error") ?? "info"),
+  logger: new Logs((process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error") ?? "info") as unknown as PluginContext["logger"],
   commentHandler: new CommentHandler(),
 };
 
