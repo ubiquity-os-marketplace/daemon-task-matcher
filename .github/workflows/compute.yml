@@ -35,6 +35,8 @@ jobs:
       KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
       LOG_LEVEL: ${{ secrets.LOG_LEVEL || 'info' }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      UOS_AI_TOKEN: ${{ secrets.UOS_AI_TOKEN }}
+      UOS_AI_URL: ${{ vars.UOS_AI_URL }}
 
     steps:
       - uses: actions/checkout@v6
