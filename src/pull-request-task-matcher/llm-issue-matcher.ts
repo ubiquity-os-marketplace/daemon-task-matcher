@@ -1,5 +1,5 @@
 import { callLlm, sanitizeLlmResponse } from "@ubiquity-os/plugin-sdk";
-import { retry } from "@ubiquity-os/plugin-sdk/helpers";
+import { checkLlmRetryableState, retry } from "@ubiquity-os/plugin-sdk/helpers";
 import OpenAI from "openai";
 import { Context } from "../types/index";
 import { IssueSummary, MatchSuggestion, PullRequestDiff, PullRequestSummary } from "./types";
@@ -129,7 +129,7 @@ export class LlmIssueMatcher {
     }
   }
 
-  private _isRetryableLlmError(error: unknown): boolean {
+  private _isRetryableLlmError(error: unknown): boolean | number {
     if (error instanceof SyntaxError) return true;
 
     const { message, status, code } = this._getErrorMeta(error);
@@ -138,6 +138,9 @@ export class LlmIssueMatcher {
     if (normalized.includes("missing openrouter_api_key")) return false;
     if (normalized.includes("missing ubiquitykerneltoken")) return false;
     if (normalized.includes("kernel attestation")) return false;
+
+    const sdkRetryable = checkLlmRetryableState(error);
+    if (sdkRetryable !== false) return sdkRetryable;
 
     if (typeof status === "number" && RETRYABLE_HTTP_STATUS.has(status)) return true;
     if (code && RETRYABLE_ERROR_CODE.has(code)) return true;
