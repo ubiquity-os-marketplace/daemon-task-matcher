@@ -16,3 +16,7 @@ cypress/screenshots
 script.ts
 .wrangler
 test-dashboard.md
+
+# generated artifacts
+src/**/*.js
+.idea

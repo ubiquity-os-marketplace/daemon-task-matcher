@@ -1,22 +1,47 @@
 {
-  "name": "ts-template",
-  "description": "ts-template for UbiquityOS plugins.",
-  "commands": {
-    "hello": {
-      "ubiquity:example": "/hello argument",
-      "description": "Hello command with an argument."
-    }
-  },
+  "name": "daemon-task-matcher",
+  "description": "Suggests priced issues that likely match a newly opened PR.",
+  "short_name": "ubiquity-os-marketplace/daemon-task-matcher@feat/matcher",
+  "ubiquity:listeners": ["pull_request.opened", "pull_request.reopened", "issue_comment.edited"],
   "configuration": {
     "default": {},
     "type": "object",
     "properties": {
-      "configurableResponse": {
-        "default": "Hello, world!",
-        "type": "string"
+      "confidenceThreshold": {
+        "default": 0.8,
+        "minimum": 0,
+        "maximum": 1,
+        "type": "number"
       },
-      "customStringsUrl": {
-        "type": "string"
+      "maxSuggestions": {
+        "default": 5,
+        "minimum": 1,
+        "maximum": 20,
+        "type": "integer"
+      },
+      "requirePriceLabel": {
+        "default": true,
+        "type": "boolean"
+      },
+      "maxIssuesPerLlmCall": {
+        "default": 20,
+        "minimum": 5,
+        "maximum": 200,
+        "type": "integer"
+      },
+      "openRouter": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "model": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["endpoint", "model"]
       }
     }
   }

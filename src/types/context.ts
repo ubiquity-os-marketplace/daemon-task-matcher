@@ -5,8 +5,8 @@ import { PluginSettings } from "./plugin-input";
 /**
  * Update `manifest.json` with any events you want to support like so:
  *
- * ubiquity:listeners: ["issue_comment.created", ...]
+ * ubiquity:listeners: ["pull_request.opened", ...]
  */
-export type SupportedEvents = "issue_comment.created" | "pull_request_review_comment.created";
+export type SupportedEvents = "pull_request.opened" | "pull_request.reopened" | "issue_comment.edited";
 
 export type Context<T extends SupportedEvents = SupportedEvents> = PluginContext<PluginSettings, Env, null, T>;
