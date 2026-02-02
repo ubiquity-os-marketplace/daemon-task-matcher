@@ -1,7 +1,7 @@
 {
   "name": "daemon-task-matcher",
   "description": "Suggests priced issues that likely match a newly opened PR.",
-  "short_name": "ubiquity-os-marketplace/daemon-task-matcher@feat/matcher",
+  "short_name": "ubiquity-os-marketplace/daemon-task-matcher@fix/retry",
   "ubiquity:listeners": ["pull_request.opened", "pull_request.reopened", "issue_comment.edited"],
   "configuration": {
     "default": {},
