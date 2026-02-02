@@ -1,5 +1,5 @@
 import { callLlm, sanitizeLlmResponse } from "@ubiquity-os/plugin-sdk";
-import { checkLlmRetryableState, retry } from "@ubiquity-os/plugin-sdk/helpers";
+import { retry } from "@ubiquity-os/plugin-sdk/helpers";
 import OpenAI from "openai";
 import { Context } from "../types/index";
 import { IssueSummary, MatchSuggestion, PullRequestDiff, PullRequestSummary } from "./types";
@@ -16,6 +16,8 @@ const MAX_TOTAL_ISSUES_FACTOR = 3;
 
 const RETRYABLE_HTTP_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 const RETRYABLE_ERROR_CODE = new Set(["ETIMEDOUT", "ECONNRESET", "EAI_AGAIN"]);
+const NON_RETRYABLE_MESSAGE_FRAGMENTS = ["missing openrouter_api_key", "missing ubiquitykerneltoken", "kernel attestation"];
+const RETRYABLE_MESSAGE_FRAGMENTS = ["invalid json", "empty llm response"];
 
 export class LlmIssueMatcher {
   constructor(
@@ -101,13 +103,17 @@ export class LlmIssueMatcher {
           if (!parsed?.suggestions?.length) return [];
 
           return parsed.suggestions
-            .map((s) => ({
-              owner: s.owner,
-              repo: s.repo,
-              number: s.number,
-              confidence: this._clamp01(s.confidence),
-              reason: s.reason,
-            }))
+            .map((s) => {
+              const number = Number(s.number);
+              const confidence = this._clamp01(Number(s.confidence));
+              return {
+                owner: s.owner,
+                repo: s.repo,
+                number,
+                confidence,
+                reason: s.reason,
+              };
+            })
             .filter((s) => Number.isFinite(s.confidence) && s.owner && s.repo && Number.isFinite(s.number))
             .filter((s) => allowedKeys.has(`${s.owner}/${s.repo}#${s.number}`));
         },
@@ -135,22 +141,12 @@ export class LlmIssueMatcher {
     const { message, status, code } = this._getErrorMeta(error);
     const normalized = message.toLowerCase();
 
-    if (normalized.includes("missing openrouter_api_key")) return false;
-    if (normalized.includes("missing ubiquitykerneltoken")) return false;
-    if (normalized.includes("kernel attestation")) return false;
+    if (NON_RETRYABLE_MESSAGE_FRAGMENTS.some((fragment) => normalized.includes(fragment))) return false;
 
-    const sdkRetryable = checkLlmRetryableState(error);
-    if (sdkRetryable !== false) return sdkRetryable;
+    if (this._isNonRetryableHttpStatus(status)) return false;
+    if (this._isRetryableBySignals(status, code, normalized)) return true;
 
-    if (typeof status === "number" && RETRYABLE_HTTP_STATUS.has(status)) return true;
-    if (code && RETRYABLE_ERROR_CODE.has(code)) return true;
-
-    if (normalized.includes("rate") && normalized.includes("limit")) return true;
-    if (normalized.includes("timeout")) return true;
-    if (normalized.includes("invalid json")) return true;
-    if (normalized.includes("empty llm response")) return true;
-
-    return true;
+    return false;
   }
 
   private _getErrorMeta(error: unknown): { message: string; status?: number; code?: string } {
@@ -161,6 +157,18 @@ export class LlmIssueMatcher {
     const status = typeof maybe.status === "number" ? maybe.status : undefined;
     const code = typeof maybe.code === "string" ? maybe.code : undefined;
     return { message, status, code };
+  }
+
+  private _isNonRetryableHttpStatus(status?: number): boolean {
+    return typeof status === "number" && status >= 400 && status < 500 && !RETRYABLE_HTTP_STATUS.has(status);
+  }
+
+  private _isRetryableBySignals(status: number | undefined, code: string | undefined, normalizedMessage: string): boolean {
+    if (typeof status === "number" && RETRYABLE_HTTP_STATUS.has(status)) return true;
+    if (code && RETRYABLE_ERROR_CODE.has(code)) return true;
+    if (normalizedMessage.includes("rate") && normalizedMessage.includes("limit")) return true;
+    if (normalizedMessage.includes("timeout")) return true;
+    return RETRYABLE_MESSAGE_FRAGMENTS.some((fragment) => normalizedMessage.includes(fragment));
   }
 
   private async _getCompletionText(system: string, user: string): Promise<string | null> {

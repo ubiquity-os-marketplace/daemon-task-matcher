@@ -112,7 +112,7 @@ const graphqlHandler = http.post("https://api.github.com/graphql", () =>
   })
 );
 
-const llmHandler = http.post("https://ai-ubq-fi.deno.dev/v1/chat/completions", () =>
+const llmHandler = http.post("https://ai.ubq.fi/v1/chat/completions", () =>
   HttpResponse.json({
     choices: [
       {

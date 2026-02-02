@@ -90,7 +90,7 @@ const settings = {
   confidenceThreshold: Number(args.confidenceThreshold ?? "0.8"),
   maxSuggestions: Number(args.maxSuggestions ?? "5"),
   requirePriceLabel: (args.requirePriceLabel ?? "true") !== "false",
-  maxIssuesPerLlmCall: Number(args.maxIssuesPerLlmCall ?? "40"),
+  maxIssuesPerLlmCall: Number(args.maxIssuesPerLlmCall ?? "20"),
   ...(process.env.OPENROUTER_API_KEY
     ? {
         openRouter: {

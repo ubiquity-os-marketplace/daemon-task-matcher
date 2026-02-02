@@ -13,7 +13,7 @@ export class MatcherCommentParser {
     if (!hasMarker) return { checked: [], markerFound: hasMarker };
 
     const checked: { owner: string; repo: string; number: number }[] = [];
-    const lines = body.split(/\r?\n/);
+    const lines = this._linesAfterMarker(body);
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -42,7 +42,7 @@ export class MatcherCommentParser {
     if (!hasMarker) return [];
 
     const suggestions: MatchSuggestion[] = [];
-    const lines = body.split(/\r?\n/);
+    const lines = this._linesAfterMarker(body);
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed.startsWith("- [")) continue;
@@ -59,5 +59,11 @@ export class MatcherCommentParser {
     }
 
     return suggestions;
+  }
+
+  private _linesAfterMarker(body: string): string[] {
+    const lines = body.split(/\r?\n/);
+    const markerIndex = lines.findIndex((line) => line.includes(SUGGESTION_MARKER));
+    return markerIndex === -1 ? [] : lines.slice(markerIndex + 1);
   }
 }
