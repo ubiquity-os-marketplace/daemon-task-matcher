@@ -112,8 +112,8 @@ const graphqlHandler = http.post("https://api.github.com/graphql", () =>
   })
 );
 
-const llmHandler = http.post("https://ai.ubq.fi/v1/chat/completions", () =>
-  HttpResponse.json({
+function llmResponse() {
+  return HttpResponse.json({
     choices: [
       {
         message: {
@@ -131,8 +131,11 @@ const llmHandler = http.post("https://ai.ubq.fi/v1/chat/completions", () =>
         },
       },
     ],
-  })
-);
+  });
+}
+
+const llmHandler = http.post("https://ai.ubq.fi/v1/chat/completions", llmResponse);
+const llmDenoHandler = http.post("https://ai-ubq-fi.deno.dev/v1/chat/completions", llmResponse);
 
 describe("e2e", () => {
   beforeAll(() => {
@@ -143,7 +146,16 @@ describe("e2e", () => {
     drop(db);
     await setupTests();
 
-    server.use(issuesMapHandler, installationReposHandler, pullFilesHandler, listIssuesHandler, listIssueCommentsHandler, graphqlHandler, llmHandler);
+    server.use(
+      issuesMapHandler,
+      installationReposHandler,
+      pullFilesHandler,
+      listIssuesHandler,
+      listIssueCommentsHandler,
+      graphqlHandler,
+      llmHandler,
+      llmDenoHandler
+    );
     server.use(gitattributesHandler);
   });
 
