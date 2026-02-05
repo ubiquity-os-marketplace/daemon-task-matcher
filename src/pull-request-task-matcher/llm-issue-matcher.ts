@@ -104,13 +104,11 @@ export class LlmIssueMatcher {
 
           return parsed.suggestions
             .map((s) => {
-              const number = Number(s.number);
-              const confidence = this._clamp01(Number(s.confidence));
               return {
                 owner: s.owner,
                 repo: s.repo,
-                number,
-                confidence,
+                number: Number(s.number),
+                confidence: this._clamp01(Number(s.confidence)),
                 reason: s.reason,
               };
             })
