@@ -33,7 +33,7 @@ Notes:
 
 ### Optional e2e (real GitHub data)
 
-If you want to test against a real repository, you can use https://github.com/Meniole/daemon-task-matcher and `gh`.
+If you want to test against a real repository, you can use [Meniole/daemon-task-matcher](https://github.com/Meniole/daemon-task-matcher) and `gh`.
 
 - Create a PR in that repo that should match an existing priced issue.
 - Trigger the plugin via your Ubiquity setup (or by sending the kernel-shaped POST to your local server).

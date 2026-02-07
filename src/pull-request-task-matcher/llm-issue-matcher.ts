@@ -1,5 +1,5 @@
 import { callLlm, sanitizeLlmResponse } from "@ubiquity-os/plugin-sdk";
-import { retry } from "@ubiquity-os/plugin-sdk/helpers";
+import { checkLlmRetryableState, retry } from "@ubiquity-os/plugin-sdk/helpers";
 import OpenAI from "openai";
 import { Context } from "../types/index";
 import { IssueSummary, MatchSuggestion, PullRequestDiff, PullRequestSummary } from "./types";
@@ -11,6 +11,13 @@ export type IssueMatcherConfig = {
 type LlmResult = {
   suggestions: MatchSuggestion[];
 };
+
+class EmptyLlmResponseError extends Error {
+  constructor() {
+    super("Empty LLM response");
+    this.name = "EmptyLlmResponseError";
+  }
+}
 
 const MAX_TOTAL_ISSUES_FACTOR = 3;
 
@@ -94,20 +101,22 @@ export class LlmIssueMatcher {
         async () => {
           const text = await this._getCompletionText(system, prompt);
           if (!text) {
-            throw new Error("Empty LLM response");
+            throw new EmptyLlmResponseError();
           }
 
           const parsed = JSON.parse(sanitizeLlmResponse(text)) as LlmResult;
           if (!parsed?.suggestions?.length) return [];
 
           return parsed.suggestions
-            .map((s) => ({
-              owner: s.owner,
-              repo: s.repo,
-              number: s.number,
-              confidence: this._clamp01(s.confidence),
-              reason: s.reason,
-            }))
+            .map((s) => {
+              return {
+                owner: s.owner,
+                repo: s.repo,
+                number: Number(s.number),
+                confidence: this._clamp01(Number(s.confidence)),
+                reason: s.reason,
+              };
+            })
             .filter((s) => Number.isFinite(s.confidence) && s.owner && s.repo && Number.isFinite(s.number))
             .filter((s) => allowedKeys.has(`${s.owner}/${s.repo}#${s.number}`));
         },
@@ -129,35 +138,62 @@ export class LlmIssueMatcher {
     }
   }
 
-  private _isRetryableLlmError(error: unknown): boolean {
-    if (error instanceof SyntaxError) return true;
+  private _isRetryableLlmError(error: unknown): boolean | number {
+    if (error instanceof SyntaxError || error instanceof EmptyLlmResponseError) return true;
 
-    const { message, status, code } = this._getErrorMeta(error);
-    const normalized = message.toLowerCase();
+    const sdkRetryable = checkLlmRetryableState(error);
+    if (sdkRetryable !== false) return sdkRetryable;
 
-    if (normalized.includes("missing openrouter_api_key")) return false;
-    if (normalized.includes("missing ubiquitykerneltoken")) return false;
-    if (normalized.includes("kernel attestation")) return false;
+    const { status, code } = this._getErrorMeta(error);
 
-    if (typeof status === "number" && RETRYABLE_HTTP_STATUS.has(status)) return true;
-    if (code && RETRYABLE_ERROR_CODE.has(code)) return true;
-
-    if (normalized.includes("rate") && normalized.includes("limit")) return true;
-    if (normalized.includes("timeout")) return true;
-    if (normalized.includes("invalid json")) return true;
-    if (normalized.includes("empty llm response")) return true;
-
-    return true;
+    if (this._isNonRetryableHttpStatus(status)) return false;
+    if (this._isRetryableBySignals(status, code)) return true;
+    return false;
   }
 
-  private _getErrorMeta(error: unknown): { message: string; status?: number; code?: string } {
-    if (!error || typeof error !== "object") return { message: String(error) };
+  private _getErrorMeta(error: unknown): { status?: number; code?: string } {
+    if (!error || typeof error !== "object") return {};
 
-    const maybe = error as { message?: unknown; status?: unknown; code?: unknown };
-    const message = typeof maybe.message === "string" ? maybe.message : "";
-    const status = typeof maybe.status === "number" ? maybe.status : undefined;
-    const code = typeof maybe.code === "string" ? maybe.code : undefined;
-    return { message, status, code };
+    const maybe = error as {
+      status?: unknown;
+      statusCode?: unknown;
+      code?: unknown;
+      response?: { status?: unknown };
+      cause?: { status?: unknown; code?: unknown; response?: { status?: unknown } };
+    };
+
+    const status = this._parseStatus(maybe.status, maybe.statusCode, maybe.response?.status, maybe.cause?.status, maybe.cause?.response?.status);
+
+    const code = this._parseCode(maybe.code, maybe.cause?.code);
+    return { status, code };
+  }
+
+  private _parseStatus(...values: unknown[]): number | undefined {
+    for (const value of values) {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (typeof value === "string" && value.trim()) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isFinite(parsed)) return parsed;
+      }
+    }
+    return undefined;
+  }
+
+  private _parseCode(...values: unknown[]): string | undefined {
+    for (const value of values) {
+      if (typeof value === "string" && value.trim()) return value;
+    }
+    return undefined;
+  }
+
+  private _isNonRetryableHttpStatus(status?: number): boolean {
+    return typeof status === "number" && status >= 400 && status < 500 && !RETRYABLE_HTTP_STATUS.has(status);
+  }
+
+  private _isRetryableBySignals(status: number | undefined, code: string | undefined): boolean {
+    if (typeof status === "number" && RETRYABLE_HTTP_STATUS.has(status)) return true;
+    if (code && RETRYABLE_ERROR_CODE.has(code.toUpperCase())) return true;
+    return false;
   }
 
   private async _getCompletionText(system: string, user: string): Promise<string | null> {
@@ -165,7 +201,11 @@ export class LlmIssueMatcher {
     if (openRouter) {
       const apiKey = this._context.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
       if (!apiKey) {
-        throw new Error("Missing OPENROUTER_API_KEY env var while openRouter config is set");
+        const errorMessage = "Missing OPENROUTER_API_KEY env var while openRouter config is set";
+        this._context.logger.error(errorMessage);
+        const error = new Error(errorMessage);
+        (error as Error & { status?: number }).status = 401;
+        throw error;
       }
 
       const client = new OpenAI({ apiKey, baseURL: openRouter.endpoint });

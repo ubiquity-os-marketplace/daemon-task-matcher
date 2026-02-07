@@ -10,6 +10,7 @@ export class PullRequestCommenter {
     const { octokit } = this._context;
 
     const body = this._renderBody(suggestions);
+    const commentBody = this._context.logger.info(body);
 
     const comments = await octokit.paginate(octokit.rest.issues.listComments, {
       owner: pr.owner,
@@ -24,12 +25,12 @@ export class PullRequestCommenter {
         owner: pr.owner,
         repo: pr.repo,
         comment_id: existing.id,
-        body: this._context.commentHandler.createCommentBody(this._context, this._context.logger.info(body), { raw: true }),
+        body: this._context.commentHandler.createCommentBody(this._context, commentBody, { raw: true }),
       });
       return;
     }
 
-    await this._context.commentHandler.postComment(this._context, this._context.logger.info(body), { raw: true });
+    await this._context.commentHandler.postComment(this._context, commentBody, { raw: true });
   }
 
   private _renderBody(suggestions: MatchSuggestion[]): string {

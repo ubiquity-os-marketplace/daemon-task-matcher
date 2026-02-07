@@ -1,10 +1,11 @@
 import { LOG_LEVEL, LogLevel } from "@ubiquity-os/ubiquity-os-logger";
-import { createPlugin, Options } from "@ubiquity-os/plugin-sdk";
+import { createPlugin } from "@ubiquity-os/plugin-sdk";
 import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { ExecutionContext } from "hono";
 import manifest from "../manifest.json" with { type: "json" };
 import { runPlugin } from "./index";
-import { Env, envSchema, PluginSettings, pluginSettingsSchema, SupportedEvents } from "./types/index";
+import { pluginRuntimeSchemas } from "./types/plugin-runtime-options";
+import { Env, PluginSettings, SupportedEvents } from "./types/index";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -15,8 +16,7 @@ export default {
       manifest as Manifest,
       {
         postCommentOnError: true,
-        settingsSchema: pluginSettingsSchema as unknown as Options["settingsSchema"],
-        envSchema: envSchema as unknown as Options["envSchema"],
+        ...pluginRuntimeSchemas,
         logLevel: (env.LOG_LEVEL as LogLevel) || LOG_LEVEL.INFO,
         kernelPublicKey: env.KERNEL_PUBLIC_KEY,
         bypassSignatureVerification: process.env.NODE_ENV === "local",

@@ -3,6 +3,7 @@ export type DiffIgnoreConfig = {
 };
 
 export const ALWAYS_IGNORED_GLOBS = ["**/*.lock", "**/*.lockb", "dist/**", "**/dist/**"] as const;
+const LINGUIST_ATTRS = new Set(["linguist-generated", "linguist-vendored", "linguist-documentation"]);
 
 export function createDiffIgnoreMatcher(config: DiffIgnoreConfig): (path: string) => boolean {
   const fromGitattributes = parseLinguistIgnoreGlobsFromGitattributes(config.gitattributesContent);
@@ -35,8 +36,18 @@ export function parseLinguistIgnoreGlobsFromGitattributes(content?: string): str
 }
 
 function hasLinguistGeneratedOrVendored(attrs: string): boolean {
-  const normalized = attrs.toLowerCase();
-  return normalized.includes("linguist-generated") || normalized.includes("linguist-vendored") || normalized.includes("linguist-documentation");
+  return attrs
+    .split(/\s+/)
+    .filter(Boolean)
+    .some((rawToken) => {
+      const token = rawToken.toLowerCase();
+      if (token.startsWith("-") || token.startsWith("!")) return false;
+
+      const [name, value] = token.split("=", 2);
+      if (!name || !LINGUIST_ATTRS.has(name)) return false;
+      if (value && ["0", "false", "no", "off"].includes(value)) return false;
+      return true;
+    });
 }
 
 function stripTrailingComment(line: string): string {
