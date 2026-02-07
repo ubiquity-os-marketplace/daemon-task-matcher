@@ -201,7 +201,9 @@ export class LlmIssueMatcher {
     if (openRouter) {
       const apiKey = this._context.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
       if (!apiKey) {
-        const error = new Error("Missing OPENROUTER_API_KEY env var while openRouter config is set");
+        const errorMessage = "Missing OPENROUTER_API_KEY env var while openRouter config is set";
+        this._context.logger.error(errorMessage);
+        const error = new Error(errorMessage);
         (error as Error & { status?: number }).status = 401;
         throw error;
       }
