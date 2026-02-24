@@ -5,7 +5,7 @@ import { ExecutionContext } from "hono";
 import manifest from "../manifest.json" with { type: "json" };
 import { runPlugin } from "./index";
 import { pluginRuntimeSchemas } from "./types/plugin-runtime-options";
-import { Env, PluginSettings, SupportedEvents } from "./types/index";
+import { Env, PluginSettings, SupportedEvents, pluginSettingsSchema } from "./types/index";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -17,7 +17,7 @@ export default {
       {
         postCommentOnError: true,
         ...pluginRuntimeSchemas,
-        settingsSchema: pluginRuntimeSchemas.settingsSchema,
+        settingsSchema: pluginSettingsSchema,
         logLevel: (env.LOG_LEVEL as LogLevel) || LOG_LEVEL.INFO,
         kernelPublicKey: env.KERNEL_PUBLIC_KEY,
         bypassSignatureVerification: process.env.NODE_ENV === "local",
