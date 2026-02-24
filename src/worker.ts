@@ -17,7 +17,6 @@ export default {
       {
         postCommentOnError: true,
         ...pluginRuntimeSchemas,
-        // Keep a direct settingsSchema key until all environments run a spread-aware manifest tool build.
         settingsSchema: pluginRuntimeSchemas.settingsSchema,
         logLevel: (env.LOG_LEVEL as LogLevel) || LOG_LEVEL.INFO,
         kernelPublicKey: env.KERNEL_PUBLIC_KEY,
