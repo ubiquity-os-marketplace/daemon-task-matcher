@@ -12,7 +12,7 @@ jobs:
     permissions: write-all
 
     steps:
-      - uses: ubiquity-os/action-deploy-plugin@fix/propagate-skip-bot-events
+      - uses: ubiquity-os/action-deploy-plugin@main
         with:
           action: ${{ github.event_name == 'delete' && 'delete' || 'publish' }}
           treatAsEsm: true
