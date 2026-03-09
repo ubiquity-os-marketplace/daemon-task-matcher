@@ -17,6 +17,7 @@ jobs:
           action: ${{ github.event_name == 'delete' && 'delete' || 'publish' }}
           treatAsEsm: true
           sourcemap: true
+          skipBotEvents: false
           pluginEntry: "${{ github.workspace }}/src/action.ts"
         env:
           APP_ID: ${{ secrets.APP_ID }}
