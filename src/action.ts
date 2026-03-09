@@ -12,6 +12,7 @@ export default createActionsPlugin<PluginSettings, Env, null, SupportedEvents>(
     logLevel: (process.env.LOG_LEVEL as LogLevel) || LOG_LEVEL.INFO,
     ...pluginRuntimeSchemas,
     ...(process.env.KERNEL_PUBLIC_KEY && { kernelPublicKey: process.env.KERNEL_PUBLIC_KEY }),
+    skipBotEvents: false,
     postCommentOnError: true,
     bypassSignatureVerification: process.env.NODE_ENV === "local",
   }
