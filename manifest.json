@@ -1,7 +1,7 @@
 {
-  "name": "plugin-template",
+  "name": "@ubiquity-os/daemon-task-matcher",
   "short_name": "ubiquity-os-marketplace/daemon-task-matcher@development",
-  "description": "Ubiquibot plugin template repository with TypeScript support.",
+  "description": "Ubiquity OS plugin that suggests and links matching unassigned issues for pull requests.",
   "ubiquity:listeners": [
     "pull_request.opened",
     "pull_request.reopened",
