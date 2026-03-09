@@ -7,7 +7,7 @@
     "pull_request.reopened",
     "issue_comment.edited"
   ],
-  "skipBotEvents": true,
+  "skipBotEvents": false,
   "configuration": {
     "default": {},
     "type": "object",
