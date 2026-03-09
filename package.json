@@ -24,7 +24,9 @@
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "jest:test": "jest --setupFiles dotenv/config --coverage",
     "worker": "wrangler dev --env dev --port 4000",
-    "prepare": "husky"
+    "prepare": "bun run prepare:manifest && husky",
+    "prepare:manifest": "MANIFEST_PATH=${MANIFEST_PATH:-manifest.json} GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-.} GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-local/${npm_package_name:-plugin}} GITHUB_REF_NAME=${GITHUB_REF_NAME:-local} bunx @ubiquity-os/plugin-manifest-tool@latest",
+    "prebuild": "bun run prepare:manifest"
   },
   "keywords": [
     "typescript",
