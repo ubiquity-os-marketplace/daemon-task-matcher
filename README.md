@@ -1,7 +1,19 @@
 # `@ubiquity-os/daemon-task-matcher`
 
-The purpose of this plugin is to match issues against pull-requests. It will suggest a list of different issues that
-would be a good fit, and the user can select 1 or more that will get linked.
+This plugin matches pull requests to relevant open issues and helps link them automatically.
+
+## What this plugin does
+
+- On `pull_request.opened` and `pull_request.reopened`, it:
+  - skips PRs that already close an issue
+  - fetches PR diff content
+  - finds open, unassigned issues (optionally requiring a `Price: ...` label)
+  - ranks candidate issues with an LLM
+  - posts/updates a PR comment with checkbox suggestions
+- On `issue_comment.edited`, it:
+  - parses checked suggestions from the matcher comment
+  - filters out closed issues
+  - appends `Resolves owner/repo#number` links to the PR body
 
 ## Prerequisites
 
@@ -33,12 +45,12 @@ Notes:
 
 ### Optional e2e (real GitHub data)
 
-If you want to test against a real repository, you can use [Meniole/daemon-task-matcher](https://github.com/Meniole/daemon-task-matcher) and `gh`.
+If you want to test against a real repository, you can use [ubiquity-os-marketplace/daemon-task-matcher](https://github.com/ubiquity-os-marketplace/daemon-task-matcher) and `gh`.
 
 - Create a PR in that repo that should match an existing priced issue.
 - Trigger the plugin via your Ubiquity setup (or by sending the kernel-shaped POST to your local server).
 - Useful `gh` commands for quick iteration:
-  - `gh repo clone Meniole/daemon-task-matcher`
+  - `gh repo clone ubiquity-os-marketplace/daemon-task-matcher`
   - `gh pr create --fill`
   - `gh pr view --json number,title,body,headRefName`
   - `gh pr diff`

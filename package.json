@@ -1,7 +1,7 @@
 {
-  "name": "plugin-template",
+  "name": "@ubiquity-os/daemon-task-matcher",
   "version": "1.0.0",
-  "description": "Ubiquibot plugin template repository with TypeScript support.",
+  "description": "Ubiquity OS plugin that suggests and links matching unassigned issues for pull requests.",
   "author": "Ubiquity DAO",
   "license": "MIT",
   "main": "src/worker.ts",
@@ -30,8 +30,11 @@
   },
   "keywords": [
     "typescript",
-    "template",
+    "plugin",
     "dao",
+    "pull-request",
+    "issue-matching",
+    "automation",
     "ubiquity",
     "open-source"
   ],
