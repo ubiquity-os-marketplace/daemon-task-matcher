@@ -23,6 +23,9 @@ on:
       ubiquityKernelToken:
         description: "Ubiquity Kernel Token"
         required: false
+      kernelPublicKey:
+        description: "Kernel public key PEM for signature verification (optional)"
+        required: false
 
 jobs:
   compute:
