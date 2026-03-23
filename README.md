@@ -1,93 +1,73 @@
-# `@ubiquity-os/plugin-template`
+# `@ubiquity-os/daemon-task-matcher`
+
+This plugin matches pull requests to relevant open issues and helps link them automatically.
+
+## What this plugin does
+
+- On `pull_request.opened` and `pull_request.reopened`, it:
+  - skips PRs that already close an issue
+  - fetches PR diff content
+  - finds open, unassigned issues (optionally requiring a `Price: ...` label)
+  - ranks candidate issues with an LLM
+  - posts/updates a PR comment with checkbox suggestions
+- On `issue_comment.edited`, it:
+  - parses checked suggestions from the matcher comment
+  - filters out closed issues
+  - appends `Resolves owner/repo#number` links to the PR body
 
 ## Prerequisites
 
-- A good understanding of how the [kernel](https://github.com/ubiquity/ubiquibot-kernel) works and how to interact with it.
-- A basic understanding of the Ubiquibot configuration and how to define your plugin's settings.
+- copy the `.env.example` to `.env` and populate the required values
 
 ## Getting Started
 
-1. Create a new repository using this template.
-2. Clone the repository to your local machine.
-3. Install the dependencies preferably using `bun`.
+1. `bun install`
+2. `NODE_ENV=local bun run dev:bun`
 
-## Creating a new plugin
+## Local Testing
 
-- If your plugin is to be used as a slash command which should have faster response times as opposed to longer running GitHub action tasks, you should use the `worker` type.
+### Send a test event (POST)
 
-1. Ensure you understand and have setup the [kernel](https://github.com/ubiquity/ubiquibot-kernel).
-2. Update [compute.yml](./.github/workflows/compute.yml) with your plugin's name and update the `id`.
-3. Update [context.ts](./src/types/context.ts) with the events that your plugin will fire on.
-4. Update [manifest.json](./manifest.json) with a proper description of your plugin.
-5. Update [plugin-input.ts](./src/types/plugin-input.ts) to match the `with:` settings in your org or repo level configuration.
+The local server accepts the same request body shape the Ubiquity kernel sends.
 
-- Your plugin config should look similar to this:
+1. Start the plugin:
+
+- `NODE_ENV=local bun run dev:bun`
+
+2. In another terminal, send a `pull_request.opened` event:
+
+- `GITHUB_TOKEN=... bun scripts/post-event.ts`
+
+Notes:
+
+- `NODE_ENV=local` enables signature bypass for local development.
+- The request payload uses a Brotli+base64 `eventPayload`, matching the plugin SDK input schema.
+
+### Optional e2e (real GitHub data)
+
+If you want to test against a real repository, you can use [ubiquity-os-marketplace/daemon-task-matcher](https://github.com/ubiquity-os-marketplace/daemon-task-matcher) and `gh`.
+
+- Create a PR in that repo that should match an existing priced issue.
+- Trigger the plugin via your Ubiquity setup (or by sending the kernel-shaped POST to your local server).
+- Useful `gh` commands for quick iteration:
+  - `gh repo clone ubiquity-os-marketplace/daemon-task-matcher`
+  - `gh pr create --fill`
+  - `gh pr view --json number,title,body,headRefName`
+  - `gh pr diff`
+  - `gh issue list --state open --json number,title,labels`
+
+## Configuration
 
 ```yml
 plugins:
-  - name: hello-world
-    id: hello-world
-    uses:
-      - plugin: http://localhost:4000
-        with:
-          # Define configurable items here and the kernel will pass these to the plugin.
-          configurableResponse: "Hello, is it me you are looking for?"
-          customStringsUrl: "https://raw.githubusercontent.com/ubiquibot/plugin-template/development/strings.json"
+  http://localhost:4000:
+    with:
+      confidenceThreshold: 0.5
+      maxSuggestions: 5
+      requirePriceLabel: true
+      maxIssuesPerLlmCall: 40
+      # optional: use OpenRouter via OpenAI SDK instead of callLlm
+      openRouter:
+        endpoint: "https://openrouter.ai/api/v1"
+        model: "openai/gpt-4o-mini"
 ```
-
-###### At this stage, your plugin will fire on your defined events with the required settings passed in from the kernel. You can now start writing your plugin's logic.
-
-6. Start building your plugin by adding your logic to the [plugin.ts](./src/index.ts) file.
-
-## Testing a plugin
-
-### Worker Plugins
-
-- `bun worker` - to run the worker locally.
-- To trigger the worker, `POST` requests to http://localhost:4000/ with an event payload similar to:
-
-```ts
-await fetch("http://localhost:4000/", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    stateId: "",
-    eventName: "",
-    eventPayload: "",
-    settings: "",
-    ref: "",
-    authToken: "",
-  }),
-});
-```
-
-A full example can be found [here](https://github.com/ubiquibot/assistive-pricing/blob/623ea3f950f04842f2d003bda3fc7b7684e41378/tests/http/request.http).
-
-#### Deploying the Worker
-
-For testing purposes, the worker can be deployed through the Worker Deploy and Worker Delete workflows. It requires to
-create a personal [Cloudflare Account](https://www.cloudflare.com/), and fill the `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` within your
-GitHub Action Secrets.
-
-### Action Plugins
-
-- Ensure the kernel is running and listening for events.
-- Fire an event in/to the repo where the kernel is installed. This can be done in a number of ways, the easiest being via the GitHub UI or using the GitHub API, such as posting a comment, opening an issue, etc in the org/repo where the kernel is installed.
-- The kernel will process the event and dispatch it using the settings defined in your `.ubiquibot-config.yml`.
-- The `compute.yml` workflow will run and execute your plugin's logic.
-- You can view the logs in the Actions tab of your repo.
-
-[Nektos Act](https://github.com/nektos/act) - a tool for running GitHub Actions locally.
-
-## More information
-
-- [Full Ubiquibot Configuration](https://github.com/ubiquity/ubiquibot/blob/0fde7551585499b1e0618ec8ea5e826f11271c9c/src/types/configuration-types.ts#L62) - helpful for defining your plugin's settings as they are strongly typed and will be validated by the kernel.
-- [Ubiquibot V1](https://github.com/ubiquity/ubiquibot) - helpful for porting V1 functionality to V2, helper/utility functions, types, etc. Everything is based on the V1 codebase but with a more modular approach. When using V1 code, keep in mind that most all code will need refactored to work with the new V2 architecture.
-
-## Examples
-
-- [Start/Stop Slash Command](https://github.com/ubq-testing/start-stop-module) - simple
-- [Assistive Pricing Plugin](https://github.com/ubiquibot/assistive-pricing) - complex
-- [Conversation Rewards](https://github.com/ubiquibot/conversation-rewards) - really complex
