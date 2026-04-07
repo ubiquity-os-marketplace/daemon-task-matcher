@@ -71,12 +71,13 @@ export class CommentHandler {
     const issueNumber = context.payload?.pull_request?.number ?? 1;
     const existingComments = db.issueComments.getAll();
     const nextId = existingComments.reduce((max, comment) => Math.max(max, Number(comment.id)), 0) + 1;
+    const timestamp = new Date().toISOString();
 
     db.issueComments.create({
       id: nextId,
       body: normalizeCommentBody(body, options),
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: timestamp,
+      updated_at: timestamp,
       issue_number: issueNumber,
       user: {
         login: "ubiquibot",
