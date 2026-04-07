@@ -17,6 +17,7 @@ const cfg: Config = {
   extensionsToTreatAsEsm: [".ts", ".tsx"],
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^@ubiquity-os/plugin-sdk$": "<rootDir>/tests/__mocks__/plugin-sdk.ts",
   },
   setupFilesAfterEnv: ["dotenv/config", "<rootDir>/tests/jest-setup.ts"],
 };
