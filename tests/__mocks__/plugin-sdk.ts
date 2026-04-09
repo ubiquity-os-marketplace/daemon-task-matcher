@@ -4,6 +4,8 @@ type PluginInstance = {
   fetch: (request: Request) => Response | Promise<Response>;
 };
 
+export type Manifest = Record<string, unknown>;
+
 type LlmMessage = {
   message?: {
     content?: string | null;
@@ -120,4 +122,8 @@ export async function callLlm(): Promise<{ choices: LlmMessage[] }> {
 
 export function sanitizeLlmResponse(value: string): string {
   return value;
+}
+
+export function resolveRuntimeManifest<T extends Manifest>(manifest: T): T {
+  return manifest;
 }
