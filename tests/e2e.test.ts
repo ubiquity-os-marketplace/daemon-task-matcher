@@ -4,7 +4,7 @@ import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 import { customOctokit } from "@ubiquity-os/plugin-sdk/octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { http, HttpResponse } from "msw";
-import manifest from "../manifest.json";
+import manifest from "../manifest.json" with { type: "json" };
 import { runPlugin } from "../src";
 import type { Context } from "../src/types/index";
 import { db } from "./__mocks__/db";
