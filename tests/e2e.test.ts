@@ -173,7 +173,7 @@ describe("e2e", () => {
     const response = await worker.fetch(new Request("http://localhost/manifest.json"), {} as never);
     expect(response.status).toBe(200);
     const content = await response.json();
-    expect(content).toEqual(manifest);
+    expect(content).toEqual({ ...manifest, homepage_url: "http://localhost" });
   });
 
   it("runs matcher on pull_request.opened and posts suggestions", async () => {
