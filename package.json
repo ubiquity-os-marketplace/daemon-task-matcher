@@ -10,7 +10,6 @@
     "node": ">=24.11.0"
   },
   "scripts": {
-    "dev:bun": "bun --watch --no-clear-screen --port 4000 src/worker.ts",
     "dev:deno": "deno serve -A --watch --no-clear-screen --port 4000 src/worker.ts",
     "build": "tsc --project tsconfig.json",
     "format": "run-p format:*",
@@ -40,7 +39,7 @@
   ],
   "dependencies": {
     "@sinclair/typebox": "0.34.41",
-    "@ubiquity-os/plugin-sdk": "^3.12.0",
+    "@ubiquity-os/plugin-sdk": "3.12.8",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "hono": "^4.11.5",
     "openai": "^6.16.0"
